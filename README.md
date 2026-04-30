@@ -226,9 +226,7 @@ If you build on this work, please cite as:
 ```bibtex
 @thesis{zamatin2026rd,
   author       = {Zamatin, Ivan},
-  title        = {R\&D and Total Factor Productivity in Russia, 2011--2023:
-                  A Hierarchy of Production-Function Estimators with an Endogenous
-                  Productivity Transition},
+  title        = {INNOVATION AND PRODUCTIVITY: AN EMPIRICAL ANALYSIS OF RUSSIAN FIRMS},
   type         = {Bachelor's thesis},
   school       = {HSE University},
   year         = {2026}
