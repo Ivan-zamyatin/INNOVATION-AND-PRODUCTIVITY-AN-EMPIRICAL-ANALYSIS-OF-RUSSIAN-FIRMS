@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Large data files (not committed; downloaded by the notebook from HuggingFace)
+*.parquet
+rfsd_final_panel.csv
+
+# Notebook execution artifacts
+*_executed.ipynb
+*_run.ipynb
+*.bak*
+Untitled-*.ipynb
+
+# EDA timestamped exports
+eda_export_*/
+
+# LaTeX intermediates (only PDF + .tex sources tracked)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.fdb_latexmk
+*.fls

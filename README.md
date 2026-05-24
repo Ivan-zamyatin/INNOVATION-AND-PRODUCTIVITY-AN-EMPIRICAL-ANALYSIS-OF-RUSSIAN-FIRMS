@@ -7,7 +7,11 @@
 [![Data: RFSD](https://img.shields.io/badge/data-RFSD%20HuggingFace-yellow.svg)](https://huggingface.co/datasets/irlspbru/RFSD)
 [![Models: 6 estimators](https://img.shields.io/badge/estimators-OLS%20·%20FE%20·%20FE+time%20·%20OP%20·%20LP%20·%20DJ-orange.svg)]()
 
+📄 **[`thesis.pdf`](./thesis.pdf)** — full bachelor's thesis (77 pages) · 📃 **[`conf_paper.pdf`](./conf_paper.pdf)** — extended conference annotation (38 pages) · 💻 **[`code.ipynb`](./code.ipynb)** — complete analysis pipeline
+
 ---
+
+## TL;DR
 
 - **Question.** Does R&D investment causally raise firm-level Total Factor Productivity (TFP) in the Russian production economy, and is the return uniform across firms?
 - **Data.** A panel of **691,644 firm-year observations** on **162,887 unique firms** from the [Russian Financial Statements Database (RFSD)](https://huggingface.co/datasets/irlspbru/RFSD), 2011–2023, restricted to the eight production-oriented OKVED sections (A, B, C, D, E, F, H, J).
@@ -32,10 +36,31 @@
 
 ```
 .
-├── README.md                                   # this file
-├── code.ipynb                    # main analysis notebook (53 cells)
-└── thesis
+├── README.md                  # this file
+├── .gitignore                 # excludes data, caches, LaTeX intermediates
+├── thesis.pdf                 # final bachelor's thesis (77 pages)
+├── conf_paper.pdf             # extended conference annotation (38 pages)
+├── code.ipynb                 # main analysis notebook (53 cells, end-to-end pipeline)
+├── tex/                       # LaTeX sources (for reproducible manuscript compilation)
+│   ├── thesis.tex             # main manuscript source
+│   ├── conf.tex               # conference annotation source
+│   └── bibliography.bib       # APA-formatted references (biblatex)
+└── figures/                   # generated figures (PNG, 300 dpi)
+    ├── tfp_distribution.png       # boxplot, TFP by estimator
+    ├── tfp_evolution.png          # median TFP trajectory, 2012–2023
+    ├── industry_coefficients_*.png    # 6 per-method industry plots
+    ├── industry_tfp_distribution_*.png # 4 per-method industry TFP plots
+    ├── industry_rts_comparison.png    # cross-sectoral RTS heatmap
+    ├── dj_marginal_effect_rd_degree3.png  # DJ marginal-effect curve (preferred)
+    ├── dj_marginal_effect_rd_degree2.png  # DJ marginal-effect curve (sensitivity)
+    ├── dj_marginal_surface_degree3.png    # 3-D surface of marginal effect
+    ├── rd_premium_DJ.png              # innovator–non-innovator TFP premium
+    ├── poly_sensitivity_LP.png        # LP polynomial-order robustness
+    ├── poly_sensitivity_OP.png        # OP polynomial-order robustness
+    └── residuals_*.png                # OLS residual diagnostics
 ```
+
+> **Note.** Raw RFSD parquet shards and the cleaned panel CSV are **not** committed — they are downloaded automatically by `code.ipynb` from HuggingFace on the first run (see *Reproducibility* below).
 
 ---
 
@@ -58,25 +83,30 @@
 
 ### Running the analysis
 
-1. **Clone the repository and prepare data.** The notebook will download the raw RFSD parquet shards from HuggingFace on the first run if `rfsd_*.parquet` files are not yet present in the project root. The cleaned, sector-filtered panel `rfsd_final_panel.csv` is regenerated automatically from the parquet shards.
+1. **Clone this repository.**
+   ```bash
+   git clone git@github.com:Ivan-zamyatin/INNOVATION-AND-PRODUCTIVITY-AN-EMPIRICAL-ANALYSIS-OF-RUSSIAN-FIRMS.git
+   cd INNOVATION-AND-PRODUCTIVITY-AN-EMPIRICAL-ANALYSIS-OF-RUSSIAN-FIRMS
+   ```
 
-2. **Execute the notebook end to end.** The full pipeline runs in approximately **3 hours** with the production setting `N_BOOT = 200` (cell 52, *Main Execution Block*), and in approximately **15 minutes** with the development setting `N_BOOT = 20`.
+2. **Execute the notebook end to end.** The notebook downloads the raw RFSD shards from HuggingFace on the first run if `rfsd_*.parquet` are not yet present in the project root, then runs the full pipeline. Approximately **3 hours** with the production setting `N_BOOT = 200` (cell 52, *Main Execution Block*), and approximately **15 minutes** with the development setting `N_BOOT = 20`.
 
    ```bash
    jupyter nbconvert --to notebook \
        --execute code.ipynb \
-       --output code.ipynb \
+       --output code_executed.ipynb \
        --ExecutePreprocessor.timeout=14400
    ```
 
-### What the notebook produces
+3. **Re-compile the manuscript** (optional — `thesis.pdf` and `conf_paper.pdf` are already in the repo). From `tex/`:
 
-| Artifact | Source cell | Destination |
-|---|---|---|
-| Cleaned panel CSV | cells 7–24 | `rfsd_final_panel.csv` |
-| Pooled estimates with bootstrap SEs | cells 32, 34, 44 | `results/production_functions_results.csv` |
-| All 18 LaTeX tables | cell 50 | `results/all_tables.tex` |
-| All figures (300 dpi PNG) | cells 14, 42, 46 | `results/plots/`, `eda_export_<timestamp>/` |
+   ```bash
+   cd tex/
+   pdflatex thesis.tex && biber thesis && pdflatex thesis.tex && pdflatex thesis.tex
+   pdflatex conf.tex   && biber conf   && pdflatex conf.tex   && pdflatex conf.tex
+   ```
+
+   Two `pdflatex` passes after `biber` are required for cross-references (figures, tables, appendix labels) to resolve correctly. Note that `tex/` does not contain the figures by default; copy `figures/*.png` into `tex/` before compiling, or update the `\graphicspath` in the source.
 
 ---
 
@@ -141,8 +171,7 @@ LevinsohnPetrinModel(
 
 The Stage-2 moment conditions
 
-$$\mathbb{E}[\xi_{it}(\beta) \cdot Z_{it}] = 0, \quad
-Z_{it} = (l_{it-1}, m_{it-1}, k_{it-1}, r_{it-1}, k_{it}, r_{it})$$
+$$\mathbb{E}[\xi_{it}(\beta) \cdot Z_{it}] = 0, \quad Z_{it} = (l_{it-1}, m_{it-1}, k_{it-1}, r_{it-1}, k_{it}, r_{it})$$
 
 deliver six instruments for four parameters $(\beta_l, \beta_m, \beta_k, \beta_r)$. The Hansen $J$-test does not reject the over-identifying restrictions ($J = 4.35$, $p = 0.114$).
 
@@ -155,13 +184,10 @@ $$\omega_{it} = g(\omega_{it-1}, r_{it-1}) + \xi_{it}$$
 is approximated with a complete third-degree polynomial in $(\omega_{it-1}, r_{it-1})$:
 
 $$
-g(\omega, r) = \gamma_0
-+ \gamma_1 \omega + \gamma_2 r
-+ \gamma_3 \omega^2 + \gamma_4 r^2 + \gamma_5 \omega r
-+ \gamma_6 \omega^3 + \gamma_7 r^3 + \gamma_8 \omega^2 r + \gamma_9 \omega r^2.
+g(\omega, r) = \gamma_0 + \gamma_1 \omega + \gamma_2 r + \gamma_3 \omega^2 + \gamma_4 r^2 + \gamma_5 \omega r + \gamma_6 \omega^3 + \gamma_7 r^3 + \gamma_8 \omega^2 r + \gamma_9 \omega r^2.
 $$
 
-The cross-derivative $\partial^2 g / \partial \omega \partial r = \gamma_5 + 2\gamma_8 \omega + 2\gamma_9 r$ is allowed to vary across firms. A degree-2 sensitivity check is reported in Appendix~D.
+The cross-derivative $\partial^2 g / \partial \omega \partial r = \gamma_5 + 2\gamma_8 \omega + 2\gamma_9 r$ is allowed to vary across firms. A degree-2 sensitivity check is reported in Appendix D of the thesis.
 
 ### Inference
 
@@ -186,7 +212,7 @@ The cross-derivative $\partial^2 g / \partial \omega \partial r = \gamma_5 + 2\g
 | $R^2$ | 0.9359 | 0.8349 | 0.8302 | — | — | — |
 | Hansen $J$ ($p$-value) | — | — | — | — | 4.35 ($p$=0.114) | 8.14 ($p$=0.017) |
 
-\* $p < 0.1$; \*\* $p < 0.05$; \*\*\* $p < 0.01$. Clustered panel-bootstrap SEs ($B = 200$). Full table: `results/all_tables.tex` → `tab:main_results`.
+\* $p < 0.1$; \*\* $p < 0.05$; \*\*\* $p < 0.01$. Clustered panel-bootstrap SEs ($B = 200$). Full table in `thesis.pdf` (Table 2).
 
 ### DJ marginal effect of lagged R&D, by within-sample $\omega$ quantile
 
@@ -204,7 +230,7 @@ Positive, decaying monotonically with productivity. The cross-derivative $\parti
 
 ## Manuscript
 
-Section roadmap:
+The compiled bachelor's thesis (77 pages) is at [`thesis.pdf`](./thesis.pdf). Section roadmap:
 
 1. Declaration of the Use of Generative Models (HSE-mandated AI-use disclosure).
 2. Abstract.
@@ -217,6 +243,8 @@ Section roadmap:
 9. Conclusion.
 10. Appendices: A. Data and Code Availability; B. Anomaly Identification and Filtering Protocol; C. Supplementary Model Results and Diagnostics; D. DJ Polynomial-Order Sensitivity; E. Cross-Sectoral Estimation by Method.
 
+A compact conference-paper version (38 pages, same structure compressed) is at [`conf_paper.pdf`](./conf_paper.pdf).
+
 ---
 
 ## Citation
@@ -226,7 +254,9 @@ If you build on this work, please cite as:
 ```bibtex
 @thesis{zamatin2026rd,
   author       = {Zamatin, Ivan},
-  title        = {INNOVATION AND PRODUCTIVITY: AN EMPIRICAL ANALYSIS OF RUSSIAN FIRMS},
+  title        = {R\&D and Total Factor Productivity in Russia, 2011--2023:
+                  A Hierarchy of Production-Function Estimators with an Endogenous
+                  Productivity Transition},
   type         = {Bachelor's thesis},
   school       = {HSE University},
   year         = {2026}
@@ -250,10 +280,12 @@ The underlying data are due to:
 
 - Data: Russian Financial Statements Database (RFSD), Bondarkov et al. (2025), distributed via [HuggingFace Datasets](https://huggingface.co/datasets/irlspbru/RFSD).
 - Methodological foundations: Olley & Pakes (1996), Levinsohn & Petrin (2003), Ackerberg, Caves & Frazer (2015), Doraszelski & Jaumandreu (2013), Griliches (1979), Aghion & Howitt (1990), Audretsch (2020).
-- Generative-model use disclosure: see Section 1 of the manuscript (`thesis.pdf`), which lists per-section the use of Anthropic Claude (code refactoring, manuscript editing) and Google Gemini (translation, literature triage), in compliance with Section 2 of the HSE *Regulations on Checking Student Papers for Plagiarism, the Use of Generative Models, and the Publication of Bachelor's, Specialist, and Master's Theses on the HSE University Corporate Website*.
+- Generative-model use disclosure: see Section 1 of the manuscript ([`thesis.pdf`](./thesis.pdf)), which lists per-section the use of Anthropic Claude (code refactoring, manuscript editing) and Google Gemini (translation, literature triage), in compliance with Section 2 of the HSE *Regulations on Checking Student Papers for Plagiarism, the Use of Generative Models, and the Publication of Bachelor's, Specialist, and Master's Theses on the HSE University Corporate Website*.
 
 ---
 
 ## License
+
+The code in this repository (`code.ipynb`) is released under the MIT License. The compiled manuscript (`thesis.pdf`, `conf_paper.pdf`) and the figures it contains are © the author and are released for academic use under the [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) licence.
 
 The underlying RFSD data are subject to their original licence as distributed by the dataset authors on HuggingFace; please consult the dataset card before redistributing.
